@@ -1,71 +1,52 @@
-/// <reference types='cypress' />
-/// <reference types='../support' />
+/// <reference types="cypress" />
+import ArticlesPageObject from '../support/pages/article.pageObject';
+import SignInPageObject from '../support/pages/signIn.pageObject';
+import { faker } from '@faker-js/faker';
+
+const articlePage = new ArticlesPageObject();
+const signInPage = new SignInPageObject();
 
 describe('Articles page', () => {
   let user;
 
   before(() => {
     cy.task('db:clear');
-
-    const timestamp = Date.now();
     user = {
-      email: `test${timestamp}@mail.com`,
-      username: `Chandler${timestamp}`,
-      password: '12345Qwert!'
+      username: faker.internet.userName(),
+      email: faker.internet.email(),
+      password: 'Pass12345!'
     };
-
-    cy.request('POST', '/users', {
-      email: user.email,
-      username: user.username,
-      password: user.password
-    }).then((resp) => {
-      expect(resp.status).to.eq(200);
-    });
+    cy.register(user.email, user.username, user.password);
   });
 
   beforeEach(() => {
-    cy.visit('/#/login');
-
-    cy.get('input[placeholder="Email"]').type(user.email);
-    cy.get('input[placeholder="Password"]').type(user.password);
-    cy.get('button').contains('Sign in').click();
-
-    cy.get('a.nav-link').contains(user.username).should('exist');
+    signInPage.visit();
+    signInPage.typeEmail(user.email);
+    signInPage.typePassword(user.password);
+    signInPage.clickSignInBtn();
   });
 
   it('should create a new article', () => {
-    cy.visit('/#/editor');
+    const article = {
+      title: faker.lorem.words(3),
+      description: faker.lorem.sentence(),
+      body: faker.lorem.paragraph(),
+      tag: 'test'
+    };
 
-    cy.get('input[placeholder="Article Title"]').type('Test Article');
-    cy.get('input[placeholder="What\'s this article about?"]')
-      .type('Test description');
-    cy.get('textarea[placeholder="Write your article (in markdown)"]')
-      .type('Test body content');
-    cy.get('input[placeholder="Enter tags"]').type('test');
-    cy.get('button').contains('Publish Article').click();
-
-    cy.contains('Test Article').should('exist');
-    cy.contains('Test body content').should('exist');
+    articlePage.createArticle(article);
+    articlePage.assertArticleExists(article.title, article.body);
   });
 
   it('should edit an article', () => {
-    cy.contains('Test Article').click();
-    cy.contains('Edit Article').click();
-
-    cy.get('textarea[placeholder="Write your article (in markdown)"]')
-      .clear();
-    cy.get('textarea[placeholder="Write your article (in markdown)"]')
-      .type('Updated body content');
-
-    cy.get('button').contains('Publish Article').click();
-
-    cy.contains('Updated body content').should('exist');
+    const newBody = faker.lorem.paragraph();
+    articlePage.editFirstArticle(newBody);
+    articlePage.assertArticleBody(newBody);
   });
 
   it('should delete an article', () => {
-    cy.contains('Test Article').click();
-    cy.get('button').contains('Delete Article').click();
-
-    cy.contains('Test Article').should('not.exist');
+    const title = articlePage.getFirstArticleTitle();
+    articlePage.deleteFirstArticle();
+    articlePage.assertArticleNotExist(title);
   });
 });

@@ -3,48 +3,27 @@ import PageObject from '../PageObject';
 class SignUpPageObject extends PageObject {
   url = '/#/register';
 
-  get usernameField() {
-    return cy.get('input[placeholder="Username"]');
-  }
+  get usernameField() { return this.getByQa('username-sign-up'); }
+  get emailField() { return this.getByQa('email-sign-up'); }
+  get passwordField() { return this.getByQa('password-sign-up'); }
+  get signUpBtn() { return this.getByQa('sign-up-btn'); }
+  get errorMessages() { return this.getByQa('error-messages'); }
 
-  get emailField() {
-    return cy.get('input[placeholder="Email"]');
-  }
-
-  get passwordField() {
-    return cy.get('input[placeholder="Password"]');
-  }
-
-  get signUpBtn() {
-    return cy.get('button').contains('Sign up');
-  }
-
-  get errorMessages() {
-    return cy.get('ul.error-messages');
-  }
-
-  typeUsername(username) {
-    this.usernameField.type(username);
-  }
-
-  typeEmail(email) {
-    this.emailField.type(email);
-  }
-
-  typePassword(password) {
-    this.passwordField.type(password);
-  }
-
-  clickSignUp() {
-    this.signUpBtn.click();
-  }
-
+  typeUsername(username) { this.usernameField.type(username); }
+  typeEmail(email) { this.emailField.type(email); }
+  typePassword(password) { this.passwordField.type(password); }
+  clickSignUp() { this.signUpBtn.click(); }
   assertSignedUp(username) {
-    cy.contains('a.nav-link', username).should('exist');
+    this.shouldContainByQa('username-link', username);
   }
 
   assertErrorContains(text) {
-    this.errorMessages.should('contain.text', text);
+    this.errorMessages
+      .find('li')
+      .then(($items) => {
+        const allText = $items.toArray().map((el) => el.innerText).join(' ');
+        expect(allText).to.contain(text);
+      });
   }
 }
 

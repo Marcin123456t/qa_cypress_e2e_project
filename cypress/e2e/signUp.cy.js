@@ -1,22 +1,21 @@
+/// <reference types="cypress" />
 import SignUpPageObject from '../support/pages/signUp.pageObject';
 import { faker } from '@faker-js/faker';
 
+const signUpPage = new SignUpPageObject();
+
 describe('Sign Up page', () => {
-  const signUpPage = new SignUpPageObject();
   let userData;
 
-  before(() => {
+  beforeEach(() => {
     cy.task('db:clear');
+    signUpPage.visit();
 
     userData = {
       username: faker.internet.userName(),
       email: faker.internet.email(),
       password: 'Pass12345!'
     };
-  });
-
-  beforeEach(() => {
-    signUpPage.visit();
   });
 
   it('should register a new user successfully', () => {
@@ -28,13 +27,13 @@ describe('Sign Up page', () => {
     signUpPage.assertSignedUp(userData.username);
   });
 
-  it('should show an error for invalid registration', () => {
+  it('should show errors for invalid registration', () => {
     signUpPage.typeUsername('TestUser');
     signUpPage.typeEmail('invalid-email');
     signUpPage.typePassword('123');
     signUpPage.clickSignUp();
 
-    signUpPage.assertErrorContains('email is invalid');
+    signUpPage.assertErrorContains('email must be a valid email');
     signUpPage.assertErrorContains('password is too short');
   });
 });

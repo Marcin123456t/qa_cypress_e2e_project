@@ -1,43 +1,52 @@
-/// <reference types='cypress' />
-/// <reference types='../support' />
-
-import SignUpPageObject from '../support/pages/signUp.pageObject';
+/// <reference types="cypress" />
+import SettingsPageObject from '../support/pages/settings.pageObject';
+import SignInPageObject from '../support/pages/signIn.pageObject';
 import { faker } from '@faker-js/faker';
 
-describe('Sign Up page', () => {
-  let userData;
-  const signUpPage = new SignUpPageObject();
+const settingsPage = new SettingsPageObject();
+const signInPage = new SignInPageObject();
 
-  before(() => {
+describe('Settings page', () => {
+  let user;
+
+  beforeEach(() => {
     cy.task('db:clear');
 
-    userData = {
+    user = {
       username: faker.internet.userName(),
       email: faker.internet.email(),
       password: 'Pass12345!'
     };
+
+    cy.register(user.email, user.username, user.password);
+    signInPage.visit();
+    signInPage.typeEmail(user.email);
+    signInPage.typePassword(user.password);
+    signInPage.clickSignInBtn();
+    settingsPage.visit();
   });
 
-  beforeEach(() => {
-    signUpPage.visit();
+  it('should update bio', () => {
+    const bio = faker.lorem.sentence();
+    settingsPage.updateBio(bio);
+    settingsPage.assertBio(bio);
   });
 
-  it('should register a new user successfully', () => {
-    signUpPage.typeUsername(userData.username);
-    signUpPage.typeEmail(userData.email);
-    signUpPage.typePassword(userData.password);
-    signUpPage.clickSignUp();
-
-    signUpPage.assertSignedUp(userData.username);
+  it('should update username', () => {
+    const newUsername = faker.internet.userName();
+    settingsPage.updateUsername(newUsername);
+    settingsPage.assertUsername(newUsername);
   });
 
-  it('should show an error for invalid registration', () => {
-    signUpPage.typeUsername('TestUser');
-    signUpPage.typeEmail('invalid-email');
-    signUpPage.typePassword('123');
-    signUpPage.clickSignUp();
+  it('should update email', () => {
+    const newEmail = faker.internet.email();
+    settingsPage.updateEmail(newEmail);
+    settingsPage.assertEmail(newEmail);
+  });
 
-    signUpPage.assertErrorContains('Email must be a valid email.');
-    signUpPage.assertErrorContains('password is too short');
+  it('should update password', () => {
+    const newPassword = 'NewPass123!';
+    settingsPage.updatePassword(newPassword);
+    settingsPage.assertPasswordUpdated();
   });
 });
