@@ -1,7 +1,11 @@
 import PageObject from '../PageObject';
 
-class SignInPageObject extends PageObject {
-  url = '/#/login';
+class SignUpPageObject extends PageObject {
+  url = '/#/register';
+
+  get usernameField() {
+    return cy.get('input[placeholder="Username"]');
+  }
 
   get emailField() {
     return cy.get('input[placeholder="Email"]');
@@ -11,12 +15,16 @@ class SignInPageObject extends PageObject {
     return cy.get('input[placeholder="Password"]');
   }
 
-  get signInBtn() {
-    return cy.get('button').contains('Sign in');
+  get signUpBtn() {
+    return cy.get('button').contains('Sign up');
   }
 
   get errorMessages() {
     return cy.get('ul.error-messages');
+  }
+
+  typeUsername(username) {
+    this.usernameField.type(username);
   }
 
   typeEmail(email) {
@@ -27,8 +35,12 @@ class SignInPageObject extends PageObject {
     this.passwordField.type(password);
   }
 
-  clickSignInBtn() {
-    this.signInBtn.click();
+  clickSignUp() {
+    this.signUpBtn.click();
+  }
+
+  assertSignedUp(username) {
+    cy.contains('a.nav-link', username).should('exist');
   }
 
   assertErrorContains(text) {
@@ -36,4 +48,4 @@ class SignInPageObject extends PageObject {
   }
 }
 
-export default SignInPageObject;
+export default SignUpPageObject;

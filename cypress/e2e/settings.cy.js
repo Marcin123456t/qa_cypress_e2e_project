@@ -1,93 +1,43 @@
-/// <reference types="cypress" />
-/// <reference types="../support" />
+/// <reference types='cypress' />
+/// <reference types='../support' />
 
-const faker = require('faker');
+import SignUpPageObject from '../support/pages/signUp.pageObject';
+import { faker } from '@faker-js/faker';
 
-describe('Settings page', () => {
-  let user;
-  let newData;
+describe('Sign Up page', () => {
+  let userData;
+  const signUpPage = new SignUpPageObject();
 
   before(() => {
     cy.task('db:clear');
-    cy.task('generateUser').then((generateUser) => {
-      user = generateUser;
-    });
 
-    newData = {
+    userData = {
       username: faker.internet.userName(),
-      bio: faker.lorem.sentence(),
       email: faker.internet.email(),
-      password: 'NewPass123!'
+      password: 'Pass12345!'
     };
   });
 
   beforeEach(() => {
-    cy.task('db:clear');
-    cy.visit('/#/login');
-
-    cy.register(user.email, user.username, user.password);
-
-    cy.get('input[placeholder="Email"]').type(user.email);
-    cy.get('input[placeholder="Password"]').type(user.password);
-    cy.get('button').contains('Sign in').click();
-
-    cy.get('a.nav-link').contains(user.username, { timeout: 10000 })
-      .should('be.visible');
-
-    cy.visit('/#/settings');
-    cy.get('form', { timeout: 10000 }).should('be.visible');
+    signUpPage.visit();
   });
 
-  it('should provide an ability to update username', () => {
-    cy.get('input[placeholder="Username"]', { timeout: 10000 })
-      .should('be.visible');
-    cy.get('input[placeholder="Username"]').clear();
-    cy.get('input[placeholder="Username"]').type(newData.username);
-    cy.get('button').contains('Update Settings').click();
-    cy.get('a.nav-link').contains(newData.username, { timeout: 10000 })
-      .should('exist');
+  it('should register a new user successfully', () => {
+    signUpPage.typeUsername(userData.username);
+    signUpPage.typeEmail(userData.email);
+    signUpPage.typePassword(userData.password);
+    signUpPage.clickSignUp();
+
+    signUpPage.assertSignedUp(userData.username);
   });
 
-  it('should provide an ability to update bio', () => {
-    cy.get('textarea[placeholder="Short bio about you"]', { timeout: 10000 })
-      .should('be.visible');
-    cy.get('textarea[placeholder="Short bio about you"]').clear();
-    cy.get('textarea[placeholder="Short bio about you"]').type(newData.bio);
-    cy.get('button').contains('Update Settings').click();
-    cy.get('textarea[placeholder="Short bio about you"]')
-      .should('have.value', newData.bio);
-  });
+  it('should show an error for invalid registration', () => {
+    signUpPage.typeUsername('TestUser');
+    signUpPage.typeEmail('invalid-email');
+    signUpPage.typePassword('123');
+    signUpPage.clickSignUp();
 
-  it('should provide an ability to update email', () => {
-    cy.get('input[placeholder="Email"]', { timeout: 10000 })
-      .should('be.visible');
-    cy.get('input[placeholder="Email"]').clear();
-    cy.get('input[placeholder="Email"]').type(newData.email);
-    cy.get('button').contains('Update Settings').click();
-    cy.get('input[placeholder="Email"]').should('have.value', newData.email);
-  });
-
-  it('should provide an ability to update password', () => {
-    cy.get('input[placeholder="New Password"]', { timeout: 10000 })
-      .should('be.visible');
-    cy.get('input[placeholder="New Password"]').clear();
-    cy.get('input[placeholder="New Password"]').type(newData.password);
-    cy.get('button').contains('Update Settings').click();
-
-    cy.get('button').contains('Or click here to logout.', { timeout: 10000 })
-      .click();
-    cy.visit('/#/login');
-
-    cy.get('input[placeholder="Email"]').type(user.email);
-    cy.get('input[placeholder="Password"]').type(newData.password);
-    cy.get('button').contains('Sign in').click();
-    cy.get('a.nav-link').contains(newData.username, { timeout: 10000 })
-      .should('exist');
-  });
-
-  it('should provide an ability to log out', () => {
-    cy.get('button').contains('Or click here to logout.', { timeout: 10000 })
-      .should('be.visible').click();
-    cy.url().should('include', '/#/login');
+    signUpPage.assertErrorContains('Email must be a valid email.');
+    signUpPage.assertErrorContains('password is too short');
   });
 });

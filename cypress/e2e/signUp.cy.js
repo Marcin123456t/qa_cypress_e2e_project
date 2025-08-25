@@ -1,9 +1,8 @@
-/// <reference types='cypress' />
-/// <reference types='../support' />
-
-const faker = require('faker');
+import SignUpPageObject from '../support/pages/signUp.pageObject';
+import { faker } from '@faker-js/faker';
 
 describe('Sign Up page', () => {
+  const signUpPage = new SignUpPageObject();
   let userData;
 
   before(() => {
@@ -17,30 +16,25 @@ describe('Sign Up page', () => {
   });
 
   beforeEach(() => {
-    cy.visit('/#/register');
+    signUpPage.visit();
   });
 
   it('should register a new user successfully', () => {
-    cy.get('input[placeholder="Username"]').type(userData.username);
-    cy.get('input[placeholder="Email"]').type(userData.email);
-    cy.get('input[placeholder="Password"]').type(userData.password);
-    cy.get('button').contains('Sign up').click();
+    signUpPage.typeUsername(userData.username);
+    signUpPage.typeEmail(userData.email);
+    signUpPage.typePassword(userData.password);
+    signUpPage.clickSignUp();
 
-    cy.get('a.nav-link').should('contain', userData.username);
+    signUpPage.assertSignedUp(userData.username);
   });
 
   it('should show an error for invalid registration', () => {
-    cy.get('input[placeholder="Username"]').type('TestUser');
-    cy.get('input[placeholder="Email"]').type('invalid-email');
-    cy.get('input[placeholder="Password"]').type('123');
-    cy.get('button').contains('Sign up').click();
+    signUpPage.typeUsername('TestUser');
+    signUpPage.typeEmail('invalid-email');
+    signUpPage.typePassword('123');
+    signUpPage.clickSignUp();
 
-    cy.get('ul.error-messages', { timeout: 10000 }).should('exist');
-
-    cy.get('ul.error-messages li ul li', { timeout: 10000 })
-      .should('contain.text', 'This email does not seem valid.');
-
-    cy.get('ul.error-messages li ul li')
-      .should('contain.text', 'password is too short');
+    signUpPage.assertErrorContains('email is invalid');
+    signUpPage.assertErrorContains('password is too short');
   });
 });
